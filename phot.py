@@ -7,7 +7,7 @@ from astropy.table import Table
 from photutils import CircularAperture, CircularAnnulus
 # from photutils import SkyCircularAperture, SkyCircularAnnulus
 from photutils import centroid_sources, aperture_photometry
-from photutils import Background2D, MedianBackground 
+from photutils import Background2D, MedianBackground
 from photutils import make_source_mask
 from astropy.stats import sigma_clipped_stats
 from astropy.visualization import simple_norm
@@ -166,4 +166,4 @@ def bkg_subs(image, box, snr=2, npixels=5, dilate_size=15):
     bkg_estimator = MedianBackground()
     bkg = Background2D(data, box, filter_size=1, bkg_estimator=bkg_estimator,
                        mask=mask)
-    return data - bkg.Background
+    return data - bkg.background
