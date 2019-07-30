@@ -64,11 +64,16 @@ def ap_phot(image, sources, source_ap, sky_ap, delta_ann=3.0, coords='xy',
     sky_aperture = CircularAnnulus(sources, r_in=sky_ap, r_out=sky_ap +
                                    delta_ann)
 
-    if plot:
+    if show_plot:
+        index = [str(i+1) for i in range(len(sources))]
         norm = simple_norm(data, 'sqrt', percent=99)
+        plt.figure()
         plt.imshow(data, norm=norm)
         source_aperture.plot(color='white', lw=2)
         sky_aperture.plot(color='red', lw=2)
+        for a, b in sources:
+            plt.text(a, b, index, color="purple", fontsize=12)
+        plt.show()
 
     # get background using sigma clipped median
     annulus_masks = sky_aperture.to_mask(method='center')
