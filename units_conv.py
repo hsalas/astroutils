@@ -12,7 +12,7 @@ readline.set_completer_delims(' \t\n')
 # Functions for do the unit conversion
 
 
-def cfccd_to_mjy_per_pix(images):
+def cfccd_to_mjy_per_pix(image):
     """Convert from CTIO 0.9m telescope taken with cfccd camera to mJy/px
 
     inputs
@@ -26,12 +26,14 @@ def cfccd_to_mjy_per_pix(images):
     zp = image[0].header['ZP']
 
     # do conversion
-    data_mjy = image[0] * f_zp[band] * 10**(0.4*zp) * 10**3
+    data_mjy = image[0].data * f_zp[band] * 10**(-0.4*zp) * 10**3
     image[0].data = data_mjy
 
     # update header
     image[0].header['UNITS'] = 'mJy/pixel'
     image[0].header['history'] = 'units converted to  mJy/pixel'
+
+    return image
 
 
 def galex_to_mjy_per_pix_2(image, band):
@@ -303,10 +305,10 @@ if __name__ == "__main__":
     new_image = run_task(image, task, functions)
 
     # to name new image
-    sufix = 'converted.fits'
+    sufix = '_converted.fits'
     if task == 6:
-        sufix = 'nan.fits'
-    name = image_name[:image_name.index('.')] + sufix
+        sufix = '_nan.fits'
+    name = image_name[:image_name.index('.fits')] + sufix
 
     # save to file, carefull overwrite set to True
     new_image.writeto(name, overwrite=True)
