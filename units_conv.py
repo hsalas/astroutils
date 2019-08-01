@@ -12,6 +12,28 @@ readline.set_completer_delims(' \t\n')
 # Functions for do the unit conversion
 
 
+def cfccd_to_mjy_per_pix(images):
+    """Convert from CTIO 0.9m telescope taken with cfccd camera to mJy/px
+
+    inputs
+            image: image to be converted
+            band: (str) FUV or NUV
+    """
+    # zero point magnitudes
+    f_zp = {'U':1884, 'B':4646, 'V':3953, 'R':2875}
+    # read values from headers
+    band = image[0].header['FILTER']
+    zp = image[0].header['ZP']
+
+    # do conversion
+    data_mjy = image[0] * f_zp[band] * 10**(0.4*zp) * 10**3
+    image[0].data = data_mjy
+
+    # update header
+    image[0].header['UNITS'] = 'mJy/pixel'
+    image[0].header['history'] = 'units converted to  mJy/pixel'
+
+
 def galex_to_mjy_per_pix_2(image, band):
     """Convert GALEX images (FUV or NUV) from CPS (counts per second) per pixel
     to mJy per pixel. Using the zero point values for the GALEX bands
@@ -203,10 +225,10 @@ def zero_to_nan(image, value=0):
     Output:
         Image: Image with values equal to value converted to NaN
     """
-    data = image['DATA'].data
+    data = image[0].data
     w =  np.where(data == value)
     data[w] = np.NaN
-    image['DATA'].data = data
+    image[0].data = data
     return image
 
 # Functions to run main
@@ -269,7 +291,8 @@ if __name__ == "__main__":
                  '3: Spitzer to mJy/pix': spitzer_to_mJy_per_pix,
                  '4: Herschel to mJy/pix': herschel_to_mJy_per_pix,
                  '5: MUSE integrated image to W/m**2': muse_image_to_W_per_m2,
-                 '6: Zero to nan': zero_to_nan}
+                 '6: CTIO 0.9m CFCCD to mJy/pix': cfccd_to_mjy_per_pix,
+                 '7: Zero to nan': zero_to_nan}
 
     image_name = input('Please enter image name: ')
     image = load_fits(image_name)
@@ -281,7 +304,7 @@ if __name__ == "__main__":
 
     # to name new image
     sufix = 'converted.fits'
-    if task == 5:
+    if task == 6:
         sufix = 'nan.fits'
     name = image_name[:image_name.index('.')] + sufix
 
