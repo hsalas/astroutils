@@ -247,7 +247,7 @@ def load_fits(name):
         try:
             file = fits.open(name)
             image = file.copy()
-            return image
+            return image, name
         except FileNotFoundError:
             print(f"File {name} not found")
             name = input('Please enter a different file name: ')
@@ -297,7 +297,7 @@ if __name__ == "__main__":
                  '7: Zero to nan': zero_to_nan}
 
     image_name = input('Please enter image name: ')
-    image = load_fits(image_name)
+    image, image_name = load_fits(image_name)
 
     print('Choose the number of task to be perform: ' +
           ', '.join(functions.keys()))
