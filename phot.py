@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.wcs import WCS
 from astropy.table import Table
-from photutils import CircularAperture, CircularAnnulus
+from photutils import CircularAperture, CircularAnnulus, EllipticalAperture
 # from photutils import SkyCircularAperture, SkyCircularAnnulus
 from photutils import centroid_sources, aperture_photometry
 from photutils import Background2D, MedianBackground
@@ -67,8 +67,7 @@ def ap_an_phot(image, sources, source_ap, sky_ap, delta_ann=3.0, coords='xy',
         index = [str(i+1) for i in range(len(sources))]
         norm = simple_norm(data, 'sqrt', percent=99)
         plt.figure()
-
-
+        plt.imshow(data, norm=norm)
         source_aperture.plot(color='white', lw=2)
         sky_aperture.plot(color='red', lw=2)
         for a, b in sources:
@@ -94,15 +93,20 @@ def ap_an_phot(image, sources, source_ap, sky_ap, delta_ann=3.0, coords='xy',
     return phot_table
 
 
-def ap_phot(image, sources, source_ap, coords='xy', centroid=False,
-            show_plot=False, **kargs):
+def ap_phot(image, sources, radius, aperture='circular', coords='xy', theta=0,
+            centroid=False, show_plot=False, **kargs):
     """Performs circular aperture fotometry on a background substracted image, given a table with the
     coordinates (x,y) or (ra,dec) of the sources.
 
     Input:
         image:      (str) name of the .fits file with the image
         sources:    table with the Positions of the sources in the image.
-        delta_ann:  Width of the annulus to calculate the sky
+        radius:     Radius of the circular aperture in pixels.
+                    If aperture = 'elliptical' the semi axes of the ellipese
+                    (a,b) should be given.
+        aperture:   (str) Shape of the aperture to use. 'circular' or
+                    'elliptical'
+        theta:      Rotation angle for elliptical aperture in radians, optional
         centroid:   (Boolean) if True the source position centroid are
                     recalculated.
         sky_coord   (str) type of coordinates to use, either xy or radec.
@@ -135,15 +139,17 @@ def ap_phot(image, sources, source_ap, coords='xy', centroid=False,
 
     # create apertures
     sources = [(a, b) for a, b in zip(sources[x], sources[y])]
-    source_aperture = CircularAperture(sources, r=source_ap)
-
+    if aperture == 'circular':
+        source_aperture = CircularAperture(sources, r=radius)
+    elif aperture == 'elliptical':
+        source_aperture = EllipticalAperture(sources, a=radius[0], b=radius[1],
+                                           theta=theta)
 
     if show_plot:
         index = [str(i+1) for i in range(len(sources))]
         norm = simple_norm(data, 'sqrt', percent=99)
         plt.figure()
-
-
+        plt.imshow(data, norm=norm)
         source_aperture.plot(color='white', lw=2)
         for a, b in sources:
             plt.text(a, b, index, color="purple", fontsize=12)
@@ -160,9 +166,11 @@ def bkg_subs(image, box, snr=2, npixels=5, dilate_size=15):
     """
     # get data from file
     data = fits.getdata(image)
-    # create source mask
-    mask = make_source_mask(data, snr=snr, npixels=npixels,
+    # create mask
+    nan_mask = np.isnan(data)
+    source_mask = make_source_mask(data, snr=snr, npixels=npixels,
                             dilate_size=dilate_size)
+    mask = np.logical_or(nan_mask, source_mask)
     bkg_estimator = MedianBackground()
     bkg = Background2D(data, box, filter_size=1, bkg_estimator=bkg_estimator,
                        mask=mask)
