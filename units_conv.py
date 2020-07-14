@@ -20,17 +20,20 @@ def cfccd_to_mjy_per_pix(image):
             band: (str) FUV or NUV
     """
     # zero point magnitudes
-    f_zp = {'U':1884, 'B':4646, 'V':3953, 'R':2875}
+    # f_zp = {'U':1790., 'B':4063., 'V':3636, 'R':3064.}  # Bessel 98 values
+    f_zp = {'U': 1710.96, 'B': 3723.41, 'V': 3617.72, 'R': 2968.57}
     # read values from headers
     band = image[0].header['FILTER']
     zp = image[0].header['ZP']
+    time = image[0].header['EXPTIME']
 
     # do conversion
-    data_mjy = image[0].data * f_zp[band] * 10**(-0.4*zp) * 10**3
+    data_mjy = image[0].data * f_zp[band] * 10**(-0.4*zp) * 1e3
+    data_mjy /= time
     image[0].data = data_mjy
 
     # update header
-    image[0].header['UNITS'] = 'mJy/pixel'
+    image[0].header['ZUNITS'] = 'mJy/pixel'
     image[0].header['history'] = 'units converted to  mJy/pixel'
 
     return image
@@ -202,14 +205,14 @@ def herschel_to_mJy_per_pix(image, band):
 
 def muse_image_to_W_per_m2(image):
     """Converts the units of a muse image (datacube integrated over wavelength)
-    lines to W/m^2
+    from ergs/s/cm^2 to W/m^2
     """
     # muse units 10^-20 erg/s/cm^2/A
     # we already integrated in lambda when we did a filter for a given lines
     data = image[0].data
     data = data * (u.erg/u.s/u.cm**2).to(u.W/u.m**2) * 1e-20
     image[0].data = data
-    image[0].header['BUNIT'] = 'W/m**2'
+    image[0].header['ZUNIT'] = 'W/m**2'
     image[0].header['history'] = 'units converted to  W/m**2'
     return image
 
@@ -228,7 +231,7 @@ def zero_to_nan(image, value=0):
         Image: Image with values equal to value converted to NaN
     """
     data = image[0].data
-    w =  np.where(data == value)
+    w = np.where(data == value)
     data[w] = np.NaN
     image[0].data = data
     return image
@@ -282,7 +285,22 @@ def run_task(image, number, functions):
         new_image = f(image, band)
     else:
         new_image = f(image)
+
+    # check that nan values are preserved
+    if not check_nan(image[0].data, new_image[0].data):
+        new_image = zero_to_nan(new_image)
     return new_image
+
+
+def check_nan(data, new_data):
+    """checks if nan values are conserved
+    """
+    old = np.isnan(data)
+    new = np.isnan(new_data)
+    if np.all(new == old):
+        return True
+    else:
+        return False
 
 
 if __name__ == "__main__":
@@ -299,18 +317,18 @@ if __name__ == "__main__":
     image_name = input('Please enter image name: ')
     image, image_name = load_fits(image_name)
 
-    print('Choose the number of task to be perform: ' +
-          ', '.join(functions.keys()))
+    print('Choose the number of task to be perform: \n' +
+          '\n '.join(functions.keys()))
     task = input(': ')
     new_image = run_task(image, task, functions)
 
     # to name new image
     sufix = '_converted.fits'
-    if task == 6:
+    if task == '7':
         sufix = '_nan.fits'
     name = image_name[:image_name.index('.fits')] + sufix
 
     # save to file, carefull overwrite set to True
-    new_image.writeto(name, overwrite=True)
+    new_image.writeto(name, overwrite=True, output_verify='warn')
     image.close()
     print('image saved as: ' + name)
