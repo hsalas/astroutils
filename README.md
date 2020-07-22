@@ -2,7 +2,13 @@
 Python respository for scripts with common fuctions used to manipulate astronomical images. New functions and script will be added as I find myself running the same tasks over and over. 
 
 Scripts:
-  - Units_conv.py: 
+  - fits_files.py:
+     Collections of functions that I comonly use when working with fits files
+     
+  - phot.py:
+    Script with functions to do photometry on a fits file.
+
+  - units_conv.py: 
   
     This script contains functions to convert the units of astronomical images. So far the conversions include:
       - GALEX to mJy/pix (converting to f_lambda first and then to f_nu)
