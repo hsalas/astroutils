@@ -64,8 +64,23 @@ def find_pixel_scale(header):
     return pixel_scale
 
 
-def plot_fits(name, scale=None, cmap='default', colorbar='No',
+def plot_fits(name, scale=None, cmap='default', colorbar='none',
               **kwargs):
+    """ plots a intensity map in (ra, dec) of a fits image.
+
+    Inputs:
+        name:   Name of the fitsfile (str)
+        scale:  Scalebar marker to add to the plot. Tuple (d,t) with d the
+                distance (float) and t (str) the text to display
+        cmap:   Colormap to be used (str). Check list of colormps in
+                available in matplotlib https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html
+        colorbar:   Position of the colorbar (str), options: 'top', 'bottom',
+                    'left', 'right' or 'none'(default)
+        **kwargs:   kargs from aplpy and matplotlib should be recognized.
+
+    Returns:
+        image plot
+    """
     with fits.open(name) as f:
         data = f[0].data
     maxval = max(np.abs(np.nanmin(data)), np.abs(np.nanmax(data)))
