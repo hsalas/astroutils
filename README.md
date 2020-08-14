@@ -1,4 +1,4 @@
-# Aatroutils
+# Astroutils
 Python respository for scripts with common fuctions used to manipulate astronomical images. New functions and script will be added as I find myself running the same tasks over and over. 
 
 Scripts:
